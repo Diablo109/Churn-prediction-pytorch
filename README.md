@@ -1,234 +1,231 @@
-# Customer Churn Prediction using PyTorch & Machine Learning
+# 📉 Telco Customer Churn Prediction
 
-## Overview
-
-This project implements an **end-to-end customer churn prediction pipeline** using both traditional machine learning models and a deep learning model built with **PyTorch**.
-
-The objective is to predict whether a telecom customer will **churn (leave the service)** based on their demographic, account, and service usage data. The project follows a **production-style machine learning workflow** with feature engineering, class imbalance handling, cross-validation, model comparison, and explainability.
+A production-aware machine learning pipeline that predicts customer churn using the IBM Telco Customer Churn dataset. Built with a focus on correct evaluation methodology, business interpretability, and model comparison across four model classes.
 
 ---
 
-## Key Features
+## 📌 Problem Statement
 
-* End-to-end ML pipeline
-* Data cleaning and preprocessing
-* Feature engineering
-* Class imbalance handling (SMOTE)
-* Hyperparameter tuning
-* Cross-validation
-* Machine learning and deep learning models
-* Model comparison using multiple metrics
-* ROC and Precision–Recall curves
-* Feature importance analysis
-* SHAP-based model interpretability
-* Model saving and loading
-* Streamlit-ready deployment interface
+Customer churn is one of the most costly problems in the telecom industry. This project builds and compares multiple ML models to identify customers likely to churn, enabling targeted retention campaigns before the customer leaves.
+
+**Key challenge:** The dataset is imbalanced (~73% No Churn / ~27% Churn), meaning naive models will simply predict "No Churn" for everyone and still appear accurate. This project handles that correctly.
 
 ---
 
-## Dataset
+## 📂 Dataset
 
-**Telco Customer Churn Dataset**
-
-The dataset contains customer information such as:
-
-* Demographics
-* Account details
-* Services subscribed
-* Monthly charges
-* Tenure
-* Churn status (target variable)
-
-**Target variable:**
-
-* `Churn = 1` → Customer left
-* `Churn = 0` → Customer stayed
+- **Source:** [IBM Telco Customer Churn](https://www.kaggle.com/datasets/blastchar/telco-customer-churn)
+- **Size:** ~7,000 customers, 21 features
+- **Target:** `Churn` — binary (Yes / No)
+- **Features include:** tenure, contract type, internet service, monthly charges, total charges, payment method, and 15+ service subscription flags
 
 ---
 
-## Tech Stack
-
-* Python
-* PyTorch
-* Scikit-learn
-* Pandas, NumPy
-* Matplotlib, Seaborn
-* SHAP
-* imbalanced-learn (SMOTE)
-* Streamlit (optional deployment)
-
----
-
-## Project Pipeline
-
-### 1. Data Preprocessing
-
-* Removed irrelevant columns
-* Handled missing values
-* Encoded categorical variables
-* Feature scaling
-
-### 2. Feature Engineering
-
-Created new business-relevant features:
-
-* **AvgMonthlySpend** = TotalCharges / tenure
-* **IsNewCustomer** (tenure < 6 months)
-* **ServicesCount** (number of services subscribed)
-
----
-
-### 3. Class Imbalance Handling
-
-* Applied **SMOTE** to balance churn vs non-churn classes.
-
----
-
-### 4. Model Training
-
-Trained and compared three models:
-
-1. Logistic Regression
-2. Random Forest (with hyperparameter tuning)
-3. Neural Network (PyTorch)
-
----
-
-### 5. Deep Learning Model (PyTorch)
-
-**Architecture:**
-
-* Input layer
-* Dense layer (64 units, ReLU)
-* Dropout layer
-* Dense layer (32 units, ReLU)
-* Output layer (Sigmoid)
-
-**Loss:** Binary Cross-Entropy
-**Optimizer:** Adam
-
----
-
-### 6. Model Evaluation
-
-Metrics used:
-
-* Accuracy
-* ROC-AUC score
-* Precision–Recall AUC
-* Confusion matrix
-* Classification report
-
----
-
-### 7. Cross-Validation
-
-* Applied **Stratified K-Fold cross-validation**
-* Ensured stable and reliable performance estimates
-
----
-
-### 8. Model Interpretability
-
-Used:
-
-* Random Forest feature importance
-* **SHAP** for global feature impact visualization
-
----
-
-### 9. Model Comparison
-
-| Model                    | Accuracy | ROC-AUC |
-| ------------------------ | -------- | ------- |
-| Logistic Regression      | 0.73     | 0.74    |
-| Random Forest            | 0.77     | 0.71    |
-| Neural Network (PyTorch) | 0.75     | 0.74    |
-
-*(Replace with your actual results)*
-
----
-
-### 10. Business Insights
-
-Key findings from the analysis:
-
-* Customers with short tenure have the highest churn risk.
-* High monthly charges correlate with higher churn probability.
-* Month-to-month contract customers churn more frequently.
-* Customers with fewer subscribed services are more likely to leave.
-* New customers (tenure < 6 months) represent the highest-risk segment.
-
-**Recommendations:**
-
-* Offer retention incentives to new customers.
-* Encourage long-term contracts.
-* Provide service bundles for high-risk users.
-
----
-
-## Project Structure
+## 🏗️ Project Pipeline
 
 ```
-customer-churn-project/
-│
-├── churn_project.ipynb
-├── data/
-│   └── telco_churn.csv
-├── models/
-│   └── churn_model.pth
-├── app.py
-├── requirements.txt
-└── README.md
+Raw Data
+   │
+   ├── Data Cleaning (TotalCharges coercion, customerID drop)
+   ├── Label Encoding (categorical features)
+   ├── Feature Engineering
+   │       ├── AvgMonthlySpend = TotalCharges / (tenure + 1)
+   │       ├── IsNewCustomer = (tenure < 6)
+   │       └── ServicesCount = sum of all subscribed services
+   │
+   ├── Train / Test Split (80/20, stratified)
+   ├── StandardScaler
+   │
+   ├── SMOTE (inside pipeline — no data leakage)
+   │
+   ├── Model Training + GridSearchCV
+   │       ├── Logistic Regression
+   │       ├── Random Forest
+   │       ├── XGBoost
+   │       └── Neural Network (PyTorch)
+   │
+   ├── Evaluation
+   │       ├── ROC-AUC, Accuracy, F1, Precision, Recall
+   │       ├── ROC Curve + Precision-Recall Curve
+   │       ├── SHAP Feature Importance
+   │       ├── Confusion Matrix
+   │       └── Threshold Tuning
+   │
+   └── Business Summary
 ```
 
 ---
 
-## How to Run the Project
+## ⚙️ Technical Highlights
 
-### Option 1: Google Colab
+### ✅ Correct SMOTE Implementation
+SMOTE is wrapped inside an `imblearn.Pipeline` with `StratifiedKFold` cross-validation. This ensures synthetic samples are **never seen by validation folds**, preventing the data leakage that suppressed baseline scores by up to 0.13 AUC.
 
-1. Open the notebook.
-2. Upload the dataset.
-3. Run all cells.
+```python
+rf_pipeline = ImbPipeline([
+    ("smote", SMOTE(random_state=42)),
+    ("clf", RandomForestClassifier(random_state=42))
+])
+```
+
+### ✅ XGBoost with scale_pos_weight
+XGBoost handles class imbalance natively via `scale_pos_weight` (ratio of negative to positive class), which reweights the loss function directly rather than duplicating data.
+
+### ✅ PyTorch Neural Network with Early Stopping
+The NN uses BatchNorm, Dropout, a learning rate scheduler (`ReduceLROnPlateau`), and early stopping with patience=10 to prevent overfitting.
+
+### ✅ Probability-based AUC
+All ROC-AUC scores are computed using predicted **probabilities**, not binary predictions — a common mistake that artificially deflates AUC scores.
+
+### ✅ Threshold Tuning
+Default 0.5 threshold is not optimal for imbalanced churn data. The optimal threshold per model is found by maximizing F1 score across the precision-recall curve.
 
 ---
 
-### Option 2: Run Locally
+## 📊 Results
 
-#### 1. Clone the repository
+### Model Comparison
+
+| Model | Accuracy | ROC-AUC |
+|---|---|---|
+| Logistic Regression | 0.7395 | **0.8450** |
+| Random Forest | 0.7466 | 0.8416 |
+| XGBoost | 0.7410 | 0.8440 |
+| Neural Network | 0.7537 | 0.8310 |
+
+> **Best model by AUC:** Logistic Regression (0.845) — indicating that after feature engineering, the problem is largely linearly separable. This is a meaningful finding: model complexity did not outperform a well-tuned linear baseline.
+
+---
+
+### Classification Report — Best Model (Logistic Regression)
 
 ```
-git clone https://github.com/yourusername/customer-churn-project.git
-cd customer-churn-project
+              precision    recall  f1-score   support
+
+    No Churn       0.90      0.73      0.80      1035
+       Churn       0.51      0.78      0.61       374
+
+    accuracy                           0.74      1409
+   macro avg       0.70      0.75      0.71      1409
+weighted avg       0.80      0.74      0.75      1409
 ```
 
-#### 2. Install dependencies
+---
 
-```
+### Threshold Tuning Results
+
+| Model | Best Threshold | Default F1 | Tuned F1 | Default Recall | Tuned Recall |
+|---|---|---|---|---|---|
+| Logistic Regression | 0.59 | 0.612 | **0.629** | 0.775 | 0.722 |
+| Random Forest | 0.53 | 0.621 | **0.634** | 0.783 | 0.751 |
+| XGBoost | 0.54 | 0.618 | **0.636** | 0.789 | 0.770 |
+
+> All tuned thresholds are above 0.5, indicating models were slightly overconfident in churn predictions at the default cutoff. Tuning improved F1 by ~0.013–0.018 across all models.
+
+---
+
+## 💼 Business Interpretation
+
+At the tuned threshold (LR, threshold = 0.59):
+
+- **72% of actual churners** are correctly identified and flagged for retention
+- When a customer is flagged as churning, the prediction is correct **~56% of the time**
+- For every 100 churn alerts sent to a retention team:
+  - ~56 are real churners that can be saved
+  - ~44 are false alarms (wasted retention spend)
+
+### Threshold Strategy
+
+| Scenario | Recommended Threshold | Reasoning |
+|---|---|---|
+| Low-cost retention (discount email) | 0.40 | Maximize recall, catch ~85%+ of churners |
+| High-cost retention (account manager call) | 0.59 | Maximize precision, reduce wasted effort |
+
+---
+
+## 🔍 Feature Importance (SHAP)
+
+SHAP TreeExplainer was used on the Random Forest to explain individual predictions. Top features driving churn predictions:
+
+- **tenure** — shorter tenure = higher churn risk
+- **Contract type** — month-to-month contracts churn significantly more
+- **MonthlyCharges** — higher charges correlate with churn
+- **AvgMonthlySpend** (engineered) — captures value-per-month signal
+- **TechSupport / OnlineSecurity** — absence of these services increases churn risk
+
+---
+
+## 🧰 Tech Stack
+
+| Category | Tools |
+|---|---|
+| Language | Python 3.12 |
+| Data | pandas, numpy |
+| ML | scikit-learn, imbalanced-learn, XGBoost |
+| Deep Learning | PyTorch |
+| Explainability | SHAP |
+| Visualization | matplotlib, seaborn |
+| Environment | Google Colab |
+
+---
+
+## 🚀 How to Run
+
+```bash
+# Clone the repo
+git clone https://github.com/yourusername/telco-churn-prediction
+cd telco-churn-prediction
+
+# Install dependencies
 pip install -r requirements.txt
+
+# Run the notebook
+jupyter notebook churn_prediction.ipynb
 ```
 
-#### 3. Run the notebook
-
+### requirements.txt
 ```
-jupyter notebook churn_project.ipynb
+pandas
+numpy
+scikit-learn
+imbalanced-learn
+xgboost
+torch
+shap
+matplotlib
+seaborn
 ```
 
 ---
 
-### Optional: Run Streamlit App
+## 📁 Repository Structure
 
 ```
-streamlit run app.py
+telco-churn-prediction/
+│
+├── churn_prediction.ipynb   # Main notebook
+├── README.md
+├── requirements.txt
+├── churn_model.pth          # Saved PyTorch model weights
+└── WA_Fn-UseC_-Telco-Customer-Churn.csv
 ```
 
 ---
 
-## Future Improvements
+## 🧠 Key Learnings
 
-* Neural network cross-validation
-* Ensemble stacking
-* Automated ML pipeline
-* REST API deployment
-* Docker containerization
+1. **SMOTE leakage is a real problem.** Applying SMOTE before cross-validation inflated training performance and suppressed test AUC by up to 0.13. Wrapping it in a pipeline fixed this.
+2. **Simpler models can win on small tabular data.** Logistic Regression matched or outperformed XGBoost and Random Forest on this ~7k row dataset by AUC.
+3. **Threshold tuning matters more than model selection** on imbalanced datasets. The gap between models (0.831–0.845 AUC) is smaller than the gain from proper threshold selection.
+4. **Probability calibration is critical.** Computing AUC from binary predictions instead of probabilities was causing artificially low scores across the board.
+
+---
+
+## 👤 Author
+
+**Rahul Mahour**
+B.Tech — Artificial Intelligence & Data Science
+University School of Automation and Robotics, Delhi
+
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=flat&logo=github&logoColor=white)](https://github.com/yourusername)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://linkedin.com/in/yourusername)
